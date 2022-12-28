@@ -9,24 +9,46 @@
 
 using namespace std;
 
+int NumProcesses,SimulatorRunTime;
+ifstream inputfile;
+ofstream outfile;
+string lines;
+char separator=' ';
+bool IsAllCompleted=false;
+
+struct Process{
+    string ProcessID; //int mi alayım?
+    int TimeOfArrival;
+    int BurstTime;
+    int TaskVrunTime;
+    bool Completed;
+};
+
 struct Node {
     Node *parent, *left, *right;
-    float data;
+    //float data;
     int color; //red=1 and black=0
+    //string ProcessID; //int mi alayım?
+    //int TimeOfArrival;
+    //int BurstTime;
+    //int TaskVrunTime;
+    Process *nodeProcess;
+    
 };
 
 class RB {
     private:
-        Node *root;
+
         Node *nil;
         Node *nodeinit;
     public:
+        Node *root;
         RB(){
             root = NULL;
             nodeinit = NULL;
         }
-        void NullNodes(Node*, Node*);
-        void Insertion(float);
+        //void NullNodes(Node*, Node*);
+        void Insertion(Process *);
         void Deletion(Node*);
         void Transplant(Node*,Node*);
         void LeftRotate(Node*);
@@ -38,6 +60,7 @@ class RB {
         void printall(Node*, string, bool);
         void display();
         void displayall(Node*);
+        //bool IsTreeEmpty(RB*);
 };
 
 void RB::display(){
@@ -50,22 +73,22 @@ void RB::displayall(Node *node){
     }
     if(node!=NULL){
         cout<<"\n\t NODE: ";
-        cout<<"\n Data: "<<node->data;
+        cout<<"\n Data: "<<node->nodeProcess->TaskVrunTime;
         cout<<"\n Color: ";
     }
     if(node->color==0){
         cout<<"black";
     }else cout<<"red";
                  if(node->parent!=NULL)
-                       cout<<"\n Parent: "<<node->parent->data;
+                       cout<<"\n Parent: "<<node->parent->nodeProcess->TaskVrunTime;
                 else
                        cout<<"\n There is no parent of the node.  ";
                 if(node->right!=NULL)
-                       cout<<"\n Right Child: "<<node->right->data;
+                       cout<<"\n Right Child: "<<node->right->nodeProcess->TaskVrunTime;
                 else
                        cout<<"\n There is no right child of the node.  ";
                 if(node->left!=NULL)
-                       cout<<"\n Left Child: "<<node->left->data;
+                       cout<<"\n Left Child: "<<node->left->nodeProcess->TaskVrunTime;
                 else
                        cout<<"\n There is no left child of the node.  ";
                 cout<<endl;
@@ -123,7 +146,7 @@ void RB::printall(Node* root, string indentation, bool last){
         }
 
         string rbcolor = root->color ? "RED":"BLACK";
-        cout<<root->data<<"("<<rbcolor<<")"<<endl;
+        cout<<root->nodeProcess->TaskVrunTime<<"("<<rbcolor<<")"<<endl;
         printall(root->left, indentation, false);
         printall(root->right, indentation, true);
     }
@@ -247,11 +270,11 @@ Node *RB::FindMin(Node *node){
     return node;
 }
 
-void RB::Insertion(float newdata){
-    cout<<"new: "<<newdata<<endl;
+void RB::Insertion(Process * node_process){
+    cout<<"new: "<<node_process->ProcessID<<" "<<node_process->BurstTime<<endl;
     Node* z = new Node;
     z->parent = nullptr;
-    z->data=newdata;
+    z->nodeProcess->TaskVrunTime=node_process->TaskVrunTime;
     z->left = nullptr; //nil
     z->right = nullptr; //nil
     z->color = 1; //red
@@ -264,7 +287,7 @@ void RB::Insertion(float newdata){
     else{
         while(x!=NULL){
             y = x;
-            if(z->data < x->data){
+            if(z->nodeProcess->TaskVrunTime < x->nodeProcess->TaskVrunTime){
                 x=x->left;  
             } 
             else{
@@ -274,7 +297,7 @@ void RB::Insertion(float newdata){
         z->parent = y;
         if(y==nullptr){
             root = z;
-        }else if(z->data < y->data){
+        }else if(z->nodeProcess->TaskVrunTime < y->nodeProcess->TaskVrunTime){
             y->left = z;
         }
         else{
@@ -412,22 +435,19 @@ void RB::RightRotate(Node *x){
     }
 }
 
-int NumProcesses,SimulatorRunTime;
-ifstream inputfile;
-ofstream outfile;
-string lines;
-char separator=' ';
-
-struct Process{
-    string ProcessID; //int mi alayım?
-    int TimeOfArrival;
-    int BurstTime;
-};
+/*
+bool IsTreeEmpty(Node * root){
+    if(root==NULL)
+        return true;
+    else
+       return false;
+}
+*/
 
 int main(int argc, char*argv[]){ 
     inputfile.open("input.txt");
     if(!inputfile){
-        cerr << "input1.txt file could not be opened!";
+        cerr << "input.txt file could not be opened!";
         exit(1);
     }
     while(!inputfile.eof()){
@@ -439,9 +459,10 @@ int main(int argc, char*argv[]){
         }
             NumProcesses=stoi(firstline[0]);
             SimulatorRunTime=stoi(firstline[1]);
-            cout<<"NumProcesses:"<<NumProcesses<<endl;
-            cout<<"Simulatorruntime:"<<SimulatorRunTime<<endl;
+            //cout<<"NumProcesses:"<<NumProcesses<<endl;
+            //cout<<"Simulatorruntime:"<<SimulatorRunTime<<endl;
             string data[3];
+            Process *processes[NumProcesses];
         for(int i=0;i<NumProcesses;i++){
             Process *p = new Process;
             getline(inputfile, lines); // ProcessID,TimeOfArrival, BurstTime
@@ -452,19 +473,121 @@ int main(int argc, char*argv[]){
             p->ProcessID = data[0];
             p->TimeOfArrival = stoi(data[1]);
             p->BurstTime = stoi(data[2]);
+            p->TaskVrunTime=0;
+            p->Completed=false;
+            processes[i]=p;
+            
+            //cout<<p->ProcessID<<" "<<p->TimeOfArrival<<" "<<p->BurstTime<<" "<<endl;
         }
-    }
-    /*
+        inputfile.close();
+
+        
+        ofstream outfile("output.txt");
+        if (!outfile){
+            cerr << "output.txt file could not be opened!";
+            exit(1);
+        }    
+        clock_t time = clock();
+
+        RB tree_processes;
+        Node * RunningTask=NULL;
+        int min_vruntime=0;
+        int time=0;
+        //repeat until alloted time is finished or all processes ended.
+        while(time!=SimulatorRunTime || !IsAllCompleted){
+            //if the process arrival time has come, insert to the tree+
+            for(int i=0;i<NumProcesses;i++){
+                if(processes[i]->TimeOfArrival==time){
+                    tree_processes.Insertion(processes[i]);
+                }
+            }
+            //if no task is running->choose the one with smalllest vruntime. 
+            //remove that from the tree-> increment it's vruntime. check if it should stop running or not
+            if(RunningTask==NULL){
+                Node * smallest=tree_processes.FindMin(tree_processes.root); //FindMin doru mu idk??
+                tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
+                smallest->nodeProcess->TaskVrunTime++;
+                RunningTask=smallest;
+                if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
+                    //task is completed
+                    smallest->nodeProcess->Completed=true;
+                    RunningTask=NULL;
+                }
+                else{
+                    tree_processes.Insertion(smallest->nodeProcess);
+                }
+
+                min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
+                
+            }else if(RunningTask->nodeProcess->TaskVrunTime > min_vruntime){
+                //select new smallest node
+                Node * smallest=tree_processes.FindMin(tree_processes.root);
+                tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
+                smallest->nodeProcess->TaskVrunTime++;
+                RunningTask=smallest;
+                if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
+                    //task is completed
+                    smallest->nodeProcess->Completed=true;
+                    RunningTask=NULL;
+                }
+                else{
+                    tree_processes.Insertion(smallest->nodeProcess);
+                }
+            }//if RunningTask node is still smallest
+            else{
+                RunningTask->nodeProcess->TaskVrunTime++;
+                if(RunningTask->nodeProcess->TaskVrunTime==RunningTask->nodeProcess->BurstTime){
+                    //task is completed
+                    RunningTask->nodeProcess->Completed=true;
+                    RunningTask=NULL;
+                }
+                else{
+                    tree_processes.Insertion(RunningTask->nodeProcess); //tekrar insert etmeyi sadece başka smallest seçersem mi koysam?
+                }
+            }
+
+        
+            //in insertion if it has the same vruntime, add the one that is added later as a right vchild of the current
+            //bool IsAllCompleted =  tree_processes.IsTreeEmpty(tree_processes->root);
+            if(tree_processes.root==NULL)
+                IsAllCompleted=true;
+            else    
+                IsAllCompleted=false;
+
+            //CurrTime, RunningTask, TaskVruntime, MinVruntime, RBTTraversal, TaskStatus
+
+            time++;
+        }
+        
+    } 
+   
+   /*
+    
     RB tree;
-    tree.Insertion(11);
-    tree.Insertion(2);
-    tree.Insertion(14);
-    tree.Insertion(17);
-    tree.Insertion(15);
-    tree.Insertion(5);
-    tree.Insertion(8);
-    tree.display();
+    Process *p1 = new Process;
+    p1->TaskVrunTime=11;
+        Process *p2 = new Process;
+    p2->TaskVrunTime=2;
+        Process *p3 = new Process;
+    p3->TaskVrunTime=14;
+        Process *p4 = new Process;
+    p4->TaskVrunTime=17;
+        Process *p5 = new Process;
+    p5->TaskVrunTime=15;
+            Process *p6 = new Process;
+    p6->TaskVrunTime=5;
+            Process *p7 = new Process;
+    p7->TaskVrunTime=8;
+    tree.Insertion(p1);
+    tree.Insertion(p2);
+    tree.Insertion(p3);
+    tree.Insertion(p4);
+    tree.Insertion(p5);
+    tree.Insertion(p6);
+    tree.Insertion(p7);
+    //tree.display();
     //tree.RBPrint();
+    tree.FindMin(tree.root);
     */
     return 0;
 }
