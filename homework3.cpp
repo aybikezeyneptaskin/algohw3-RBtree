@@ -60,8 +60,10 @@ class RB {
         void printall(Node*, string, bool);
         void display();
         void displayall(Node*);
+        void RBTraverse(Node*);
         //bool IsTreeEmpty(RB*);
 };
+
 
 void RB::display(){
     displayall(root);
@@ -443,6 +445,21 @@ bool IsTreeEmpty(Node * root){
        return false;
 }
 */
+void RB::RBTraverse(Node*root){
+    if(root==NULL)
+        return;
+    else{
+        RBTraverse(root->left);
+        string nodecolor;
+        if(root->color==0){
+            nodecolor="Black";
+        }else{
+            nodecolor="Red";
+        }
+        outfile<< root->nodeProcess->ProcessID<<":"<<root->nodeProcess->TaskVrunTime<<"-"<<nodecolor<<";";
+        RBTraverse(root->right);
+    }
+}
 
 int main(int argc, char*argv[]){ 
     inputfile.open("input.txt");
@@ -503,61 +520,86 @@ int main(int argc, char*argv[]){
             }
             //if no task is running->choose the one with smalllest vruntime. 
             //remove that from the tree-> increment it's vruntime. check if it should stop running or not
-            if(RunningTask==NULL){
-                Node * smallest=tree_processes.FindMin(tree_processes.root); //FindMin doru mu idk??
-                tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
-                smallest->nodeProcess->TaskVrunTime++;
-                RunningTask=smallest;
-                if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
-                    //task is completed
-                    smallest->nodeProcess->Completed=true;
-                    RunningTask=NULL;
-                }
+            if(tree_processes.root!=NULL){
+                if(RunningTask==NULL){
+                    Node * smallest=tree_processes.FindMin(tree_processes.root); //FindMin doru mu idk??
+                    tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
+                    smallest->nodeProcess->TaskVrunTime++;
+                    RunningTask=smallest;
+                    if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
+                        //task is completed
+                        smallest->nodeProcess->Completed=true;
+                        RunningTask=NULL;
+                    }
+                    else{
+                        tree_processes.Insertion(smallest->nodeProcess);
+                    }
+
+                    min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
+                    
+                }else if(RunningTask->nodeProcess->TaskVrunTime > min_vruntime){
+                    //select new smallest node
+                    Node * smallest=tree_processes.FindMin(tree_processes.root);
+                    tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
+                    smallest->nodeProcess->TaskVrunTime++;
+                    RunningTask=smallest;
+                    if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
+                        //task is completed
+                        smallest->nodeProcess->Completed=true;
+                        RunningTask=NULL;
+                    }
+                    else{
+                        tree_processes.Insertion(smallest->nodeProcess);
+                    }
+                }//if RunningTask node is still smallest
                 else{
-                    tree_processes.Insertion(smallest->nodeProcess);
+                    RunningTask->nodeProcess->TaskVrunTime++;
+                    if(RunningTask->nodeProcess->TaskVrunTime==RunningTask->nodeProcess->BurstTime){
+                        //task is completed
+                        RunningTask->nodeProcess->Completed=true;
+                        RunningTask=NULL;
+                    }
+                    else{
+                        tree_processes.Insertion(RunningTask->nodeProcess); //tekrar insert etmeyi sadece başka smallest seçersem mi koysam?
+                    }
                 }
 
-                min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
+            
+                //in insertion if it has the same vruntime, add the one that is added later as a right vchild of the current
+                //bool IsAllCompleted =  tree_processes.IsTreeEmpty(tree_processes->root);
+                if(tree_processes.root==NULL)
+                    IsAllCompleted=true;
+                else    
+                    IsAllCompleted=false;
                 
-            }else if(RunningTask->nodeProcess->TaskVrunTime > min_vruntime){
-                //select new smallest node
-                Node * smallest=tree_processes.FindMin(tree_processes.root);
-                tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
-                smallest->nodeProcess->TaskVrunTime++;
-                RunningTask=smallest;
-                if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
-                    //task is completed
-                    smallest->nodeProcess->Completed=true;
-                    RunningTask=NULL;
+                //CurrTime, RunningTask, TaskVruntime, MinVruntime, RBTTraversal, TaskStatus
+                outfile<<time<<","<<RunningTask<<","<<RunningTask->nodeProcess->TaskVrunTime<<",";
+                outfile<<min_vruntime;
+                tree_processes.RBTraverse(tree_processes.root);
+                string completestring;
+                if(RunningTask->nodeProcess->Completed==true){
+                    completestring="Complete";
+                }else{
+                    completestring="Incomplete";
                 }
-                else{
-                    tree_processes.Insertion(smallest->nodeProcess);
-                }
-            }//if RunningTask node is still smallest
-            else{
-                RunningTask->nodeProcess->TaskVrunTime++;
-                if(RunningTask->nodeProcess->TaskVrunTime==RunningTask->nodeProcess->BurstTime){
-                    //task is completed
-                    RunningTask->nodeProcess->Completed=true;
-                    RunningTask=NULL;
-                }
-                else{
-                    tree_processes.Insertion(RunningTask->nodeProcess); //tekrar insert etmeyi sadece başka smallest seçersem mi koysam?
-                }
+                outfile<<completestring<<endl;
+
             }
 
-        
-            //in insertion if it has the same vruntime, add the one that is added later as a right vchild of the current
-            //bool IsAllCompleted =  tree_processes.IsTreeEmpty(tree_processes->root);
-            if(tree_processes.root==NULL)
-                IsAllCompleted=true;
-            else    
-                IsAllCompleted=false;
-
-            //CurrTime, RunningTask, TaskVruntime, MinVruntime, RBTTraversal, TaskStatus
+            //if no insertions have been made
+            else{
+                outfile<<time<<",-,-,-,-,-,-"<<endl;
+            }
 
             time++;
         }
+        outfile<<endl;
+        time = clock() - time; 
+        float total_time = 1000*(float)time / CLOCKS_PER_SEC;
+        cout<<"Time elapsed is "<<total_time<<" miliseconds."<<endl;
+        outfile<<"Scheduling finished in "<<total_time <<"ms."<<endl;
+        outfile<</*<<*/" of "<<NumProcesses<<"  are completed."<<endl; //ADD TO THIS
+        outfile<<"The order of completion of the tasks:"/*<<*/<<endl; //ADD ORDER OF COMPLETION
         
     } 
    
