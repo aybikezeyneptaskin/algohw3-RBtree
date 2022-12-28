@@ -15,30 +15,37 @@ ofstream outfile;
 string lines;
 char separator=' ';
 bool IsAllCompleted=false;
+vector<string> completedvector;
 
 struct Process{
-    string ProcessID; //int mi alayım?
-    int TimeOfArrival;
-    int BurstTime;
-    int TaskVrunTime;
-    bool Completed;
+        string ProcessID; //int mi alayım?
+        int TimeOfArrival;
+        int BurstTime;
+        int TaskVrunTime;
+        bool Completed;
+    public:
+        Process(){
+            ProcessID="";
+            TimeOfArrival=0;
+            BurstTime=0;
+            TaskVrunTime=0;
+            Completed=false;
+        }
 };
 
 struct Node {
-    Node *parent, *left, *right;
-    //float data;
-    int color; //red=1 and black=0
-    //string ProcessID; //int mi alayım?
-    //int TimeOfArrival;
-    //int BurstTime;
-    //int TaskVrunTime;
-    Process *nodeProcess;
+        Node *parent, *left, *right;
+        int color; //red=1 and black=0
+        Process *nodeProcess;
+    public:
+        Node(){
+            nodeProcess=new Process;
+        }
     
 };
 
 class RB {
     private:
-
         Node *nil;
         Node *nodeinit;
     public:
@@ -480,6 +487,7 @@ int main(int argc, char*argv[]){
             //cout<<"Simulatorruntime:"<<SimulatorRunTime<<endl;
             string data[3];
             Process *processes[NumProcesses];
+            int vectorindex=0;
         for(int i=0;i<NumProcesses;i++){
             Process *p = new Process;
             getline(inputfile, lines); // ProcessID,TimeOfArrival, BurstTime
@@ -509,12 +517,12 @@ int main(int argc, char*argv[]){
         RB tree_processes;
         Node * RunningTask=NULL;
         int min_vruntime=0;
-        int time=0;
+        int runtime=0;
         //repeat until alloted time is finished or all processes ended.
-        while(time!=SimulatorRunTime || !IsAllCompleted){
+        while(runtime!=SimulatorRunTime || !IsAllCompleted){
             //if the process arrival time has come, insert to the tree+
             for(int i=0;i<NumProcesses;i++){
-                if(processes[i]->TimeOfArrival==time){
+                if(processes[i]->TimeOfArrival==runtime){
                     tree_processes.Insertion(processes[i]);
                 }
             }
@@ -529,6 +537,8 @@ int main(int argc, char*argv[]){
                     if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
                         //task is completed
                         smallest->nodeProcess->Completed=true;
+                        completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
+                        vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
@@ -546,6 +556,8 @@ int main(int argc, char*argv[]){
                     if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
                         //task is completed
                         smallest->nodeProcess->Completed=true;
+                        completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
+                        vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
@@ -557,6 +569,8 @@ int main(int argc, char*argv[]){
                     if(RunningTask->nodeProcess->TaskVrunTime==RunningTask->nodeProcess->BurstTime){
                         //task is completed
                         RunningTask->nodeProcess->Completed=true;
+                        completedvector[vectorindex]=RunningTask->nodeProcess->ProcessID;
+                        vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
@@ -573,7 +587,7 @@ int main(int argc, char*argv[]){
                     IsAllCompleted=false;
                 
                 //CurrTime, RunningTask, TaskVruntime, MinVruntime, RBTTraversal, TaskStatus
-                outfile<<time<<","<<RunningTask<<","<<RunningTask->nodeProcess->TaskVrunTime<<",";
+                outfile<<runtime<<","<<RunningTask<<","<<RunningTask->nodeProcess->TaskVrunTime<<",";
                 outfile<<min_vruntime;
                 tree_processes.RBTraverse(tree_processes.root);
                 string completestring;
@@ -588,18 +602,24 @@ int main(int argc, char*argv[]){
 
             //if no insertions have been made
             else{
-                outfile<<time<<",-,-,-,-,-,-"<<endl;
+                outfile<<runtime<<",-,-,-,-,-,-"<<endl;
             }
 
-            time++;
+            runtime++;
         }
         outfile<<endl;
         time = clock() - time; 
         float total_time = 1000*(float)time / CLOCKS_PER_SEC;
-        cout<<"Time elapsed is "<<total_time<<" miliseconds."<<endl;
         outfile<<"Scheduling finished in "<<total_time <<"ms."<<endl;
-        outfile<</*<<*/" of "<<NumProcesses<<"  are completed."<<endl; //ADD TO THIS
-        outfile<<"The order of completion of the tasks:"/*<<*/<<endl; //ADD ORDER OF COMPLETION
+        outfile<<completedvector.size()<<" of "<<NumProcesses<<"  are completed."<<endl;
+        outfile<<"The order of completion of the tasks: ";
+        for(int i=0;i<completedvector.size();i++){
+            outfile<<completedvector[i];
+            if(i!=completedvector.size()){
+                outfile<<"-";
+            }
+        }
+        outfile<<endl; //ADD ORDER OF COMPLETION
         
     } 
    
