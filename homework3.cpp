@@ -24,12 +24,12 @@ struct Process{
         int TaskVrunTime;
         bool Completed;
     public:
-        Process(){
-            ProcessID="";
-            TimeOfArrival=0;
-            BurstTime=0;
-            TaskVrunTime=0;
-            Completed=false;
+        Process(string processID, int timeOfArrival, int burstTime, int taskVrunTime, bool completed){
+            ProcessID=processID;
+            TimeOfArrival=timeOfArrival;
+            BurstTime=burstTime;
+            TaskVrunTime=taskVrunTime;
+            Completed=completed;
         }
 };
 
@@ -38,8 +38,8 @@ struct Node {
         int color; //red=1 and black=0
         Process *nodeProcess;
     public:
-        Node(){
-            nodeProcess=new Process;
+        Node(Process *processnode){
+            nodeProcess=processnode;
         }
     
 };
@@ -53,6 +53,12 @@ class RB {
         RB(){
             root = NULL;
             nodeinit = NULL;
+            /*
+            nil=0;
+            nil->left=NULL;
+            nil->right=NULL;
+            nil->color=0;
+            */
         }
         //void NullNodes(Node*, Node*);
         void Insertion(Process *);
@@ -163,7 +169,7 @@ void RB::printall(Node* root, string indentation, bool last){
 
 void RB::Transplant(Node *u, Node*v){
     if(u->parent == nullptr){
-        this->root = v;
+        root = v;
     }
     else if(u=u->parent->left){
         u->parent->left=v;
@@ -175,6 +181,7 @@ void RB::Transplant(Node *u, Node*v){
 
 void RB::Deletion(Node *z){
     if(root==nullptr) return;
+    Node*node=NULL;
     Node *y=z;
     //y-originaal-color = y->color
     int y_orig_color = y->color;
@@ -207,7 +214,7 @@ void RB::Deletion(Node *z){
         y->left->parent = y;
         y->color = z->color;
     }
-    //delete
+    delete z;//??
     if(y_orig_color == 0){
         Fixup_Deletion(x);
     }
@@ -281,7 +288,7 @@ Node *RB::FindMin(Node *node){
 
 void RB::Insertion(Process * node_process){
     cout<<"new: "<<node_process->ProcessID<<" "<<node_process->BurstTime<<endl;
-    Node* z = new Node;
+    Node* z = new Node(node_process);
     z->parent = nullptr;
     z->nodeProcess->TaskVrunTime=node_process->TaskVrunTime;
     z->left = nullptr; //nil
@@ -489,12 +496,13 @@ int main(int argc, char*argv[]){
             Process *processes[NumProcesses];
             int vectorindex=0;
         for(int i=0;i<NumProcesses;i++){
-            Process *p = new Process;
+            
             getline(inputfile, lines); // ProcessID,TimeOfArrival, BurstTime
             stringstream linedata(lines);
             for(int x=0;x<3;x++){
                 getline(linedata,data[x],separator);
             }
+            Process *p = new Process(data[0], stoi(data[1]), stoi(data[2]), 0, false);
             p->ProcessID = data[0];
             p->TimeOfArrival = stoi(data[1]);
             p->BurstTime = stoi(data[2]);
