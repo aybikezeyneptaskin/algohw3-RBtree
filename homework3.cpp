@@ -293,11 +293,13 @@ Node *RB::FindMin(Node *node){
 void RB::Insertion(Process * node_process){
     cout<<"new: "<<node_process->ProcessID<<" "<<node_process->BurstTime<<endl;
     Node* z = new Node(node_process,z->parent);
+    /*
     z->parent = nil;
     z->nodeProcess->TaskVrunTime=node_process->TaskVrunTime;
     z->left = nil; //nil
     z->right = nil; //nil
     z->color = 1; //red
+    */
     Node *y = nil;
     Node *x = root;
     while(x!=nil){
@@ -328,9 +330,9 @@ void RB::Insertion(Process * node_process){
         }*/
     
 
-    //z->left = nil;
-    //z->right = nil;
-    //z->color = 1; //red
+    z->left = nil;
+    z->right = nil;
+    z->color = 1; //red
     Fixup_Insertion(z);
 }
 
