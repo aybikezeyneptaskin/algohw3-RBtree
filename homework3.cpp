@@ -38,27 +38,31 @@ struct Node {
         int color; //red=1 and black=0
         Process *nodeProcess;
     public:
-        Node(Process *processnode){
+        Node(Process *processnode,Node* Parent){
             nodeProcess=processnode;
+            right=NULL;
+            left=NULL;
+            parent=Parent;
         }
-    
+        Node(){
+            nodeProcess=NULL;
+            right=NULL;
+            left=NULL;
+            parent=NULL;
+        }
 };
 
 class RB {
-    private:
-        Node *nil;
-        Node *nodeinit;
     public:
+        Node *nil;
         Node *root;
         RB(){
-            root = NULL;
-            nodeinit = NULL;
-            /*
-            nil=0;
-            nil->left=NULL;
-            nil->right=NULL;
+            nil = new Node();
+            root = nil;
+            nil->left=nil;
+            nil->right=nil;
+            nil->parent=nil;
             nil->color=0;
-            */
         }
         //void NullNodes(Node*, Node*);
         void Insertion(Process *);
@@ -82,7 +86,7 @@ void RB::display(){
     displayall(root);
 }
 void RB::displayall(Node *node){
-    if(root==nullptr){
+    if(root==nil){
         cout<<"tree is empty!"<<endl;
         return;
     }
@@ -127,8 +131,8 @@ void RB::displayall(Node *node){
 RB::RB(){
     nodeinit = new Node;
     nodeinit->color = 0;
-    nodeinit->left = nullptr;
-    nodeinit->right = nullptr;
+    nodeinit->left = nil;
+    nodeinit->right = nil;
     root = nodeinit;
 }
 
@@ -137,20 +141,21 @@ void RB::NullNodes(Node* nodeinit, Node * parent){
     root = NULL;
     node->data = 0;
     node->color = 0; //black
-    node->left = nullptr;
-    node->right = nullptr;
+    node->left = nil;
+    node->right = nil;
     node->parent = parent;
 }
 */
+/*
 void RB::RBPrint(){
-    if(root!=nullptr){
+    if(root!=nil){
         //cout<<"root: "<<root->data<<endl;
         printall(this->root, "", true);
     }
 }
 
 void RB::printall(Node* root, string indentation, bool last){
-    if(root!=nullptr){
+    if(root!=nil){
         cout<<indentation;
         if(last){
             cout<<"R---";
@@ -166,12 +171,12 @@ void RB::printall(Node* root, string indentation, bool last){
         printall(root->right, indentation, true);
     }
 }
-
+*/
 void RB::Transplant(Node *u, Node*v){
-    if(u->parent == nullptr){
+    if(u->parent == nil){
         root = v;
     }
-    else if(u=u->parent->left){
+    else if(u==u->parent->left){
         u->parent->left=v;
     }
     else{
@@ -180,17 +185,17 @@ void RB::Transplant(Node *u, Node*v){
 }
 
 void RB::Deletion(Node *z){
-    if(root==nullptr) return;
-    Node*node=NULL;
+    if(root==nil) return;
+    //Node*node=NULL;
     Node *y=z;
-    //y-originaal-color = y->color
+    //y-original-color = y->color
     int y_orig_color = y->color;
     Node *x;
-    if(z->left == nullptr){
+    if(z->left == nil){
         x=z->right;
         Transplant(z,z->right);
     }
-    else if(z->right==nullptr){
+    else if(z->right==nil){
         x=z->left;
         Transplant(z,z->left);
     }
@@ -214,11 +219,10 @@ void RB::Deletion(Node *z){
         y->left->parent = y;
         y->color = z->color;
     }
-    delete z;//??
+    //delete z;//??
     if(y_orig_color == 0){
         Fixup_Deletion(x);
     }
-
 }
 
 void RB::Fixup_Deletion(Node *x){
@@ -274,13 +278,13 @@ void RB::Fixup_Deletion(Node *x){
                 x=root;
             }
         }
-        x->color = 0; //black
-        //root->color=0;
+
     }
+    x->color = 0; //black
 }
 
 Node *RB::FindMin(Node *node){
-    while(node->left != nullptr){
+    while(node->left != nil){
         node=node->left;
     }
     return node;
@@ -288,30 +292,25 @@ Node *RB::FindMin(Node *node){
 
 void RB::Insertion(Process * node_process){
     cout<<"new: "<<node_process->ProcessID<<" "<<node_process->BurstTime<<endl;
-    Node* z = new Node(node_process);
-    z->parent = nullptr;
+    Node* z = new Node(node_process,z->parent);
+    z->parent = nil;
     z->nodeProcess->TaskVrunTime=node_process->TaskVrunTime;
-    z->left = nullptr; //nil
-    z->right = nullptr; //nil
+    z->left = nil; //nil
+    z->right = nil; //nil
     z->color = 1; //red
-    Node *y = NULL;
+    Node *y = nil;
     Node *x = root;
-    if(root==NULL){
-        root=z;
-        z->parent=NULL;
-    }
-    else{
-        while(x!=NULL){
-            y = x;
-            if(z->nodeProcess->TaskVrunTime < x->nodeProcess->TaskVrunTime){
-                x=x->left;  
-            } 
-            else{
-                x = x->right;  
-            } 
+    while(x!=nil){
+        y = x;
+        if(z->nodeProcess->TaskVrunTime < x->nodeProcess->TaskVrunTime){
+            x=x->left;  
+        } 
+        else{
+            x = x->right;  
+        } 
         }
         z->parent = y;
-        if(y==nullptr){
+        if(y==nil){
             root = z;
         }else if(z->nodeProcess->TaskVrunTime < y->nodeProcess->TaskVrunTime){
             y->left = z;
@@ -320,135 +319,103 @@ void RB::Insertion(Process * node_process){
             y->right = z;
         }
         /*
-        if(z->parent==nullptr){
+        if(z->parent==nil){
             z->color = 0;
             return;
         }
-        if(z->parent->parent==nullptr){
+        if(z->parent->parent==nil){
             return;
         }*/
-    }
+    
 
-    //z->left = nullptr;
-    //z->right = nullptr;
+    //z->left = nil;
+    //z->right = nil;
     //z->color = 1; //red
     Fixup_Insertion(z);
 }
 
 void RB::Fixup_Insertion(Node*z){
-    cout<<"fixup "<<endl;
     Node *y;
-    if(root==z){
-        z->color=0;//black
-        return;
-    }
-    while(z->parent!=nullptr && z->parent->color==1){
+    while(z->parent->color==1){
         if(z->parent == z->parent->parent->left){
-            if(z->parent->parent->right != nullptr){
-                y=z->parent->parent->right;
-                if(y->color==1){
-                    z->parent->color=0;//black
-                    y->color=0;//black
-                    z->parent->parent->color=1;//red
-                    z=z->parent->parent;
-                }
+            y=z->parent->parent->right;
+            if(y->color==1){
+                z->parent->color=0;//black
+                y->color=0;//black
+                z->parent->parent->color=1;//red
+                z=z->parent->parent;
             }
-            else{
-                if(z==z->parent->right){
+            else if(z==z->parent->right){
                     z=z->parent;
                     LeftRotate(z);
-                }
-                z->parent->color=0;//black
-                z->parent->parent->color=1;//red
-                RightRotate(z->parent->parent);
             }
+            z->parent->color=0;//black
+            z->parent->parent->color=1;//red
+            RightRotate(z->parent->parent);
             
         }
         else{
-            if(z->parent->parent->left!=nullptr){
-                y=z->parent->parent->left;
-                if(y->color==1){
-                    z->parent->color=0;//black
-                    y->color=0;//black
-                    z->parent->parent->color=1;//red
-                    z=z->parent->parent;
-                }
+            y=z->parent->parent->left;
+            if(y->color==1){
+                z->parent->color=0;//black
+                y->color=0;//black
+                z->parent->parent->color=1;//red
+                z=z->parent->parent;
             }
-            else{
-                if(z==z->parent->left){
+            else if(z==z->parent->left){
                     z=z->parent;
                     RightRotate(z);
-                }
-                z->parent->color=0;//black
-                z->parent->parent->color=1;//red
-                LeftRotate(z->parent->parent);
             }
+            z->parent->color=0;//black
+            z->parent->parent->color=1;//red
+            LeftRotate(z->parent->parent);
+            
         }
-        root->color=0;//black
-    }
+        
+    }root->color=0;//black
 }
 
 void RB::LeftRotate(Node *x){
-    if(x->right==nullptr){
-        return;
+    Node * y = x->right;
+    x->right = y->left;
+    if(y->left!=nil){
+        y->left->parent = x;
     }
-    else{
-        Node * y = x->right;
-        if(y->left!=nullptr){
-            x->right = y->left;
-            y->left->parent = x;
-        }
-        else{
-            x->right=nullptr;
-        }
-        if(x->parent!=nullptr){
-            y->parent = x->parent;
-        }
-        if(x->parent==nullptr){
-            root = y;
-        }
-        else{
-            if(x==x->parent->left){
-                x->parent->left = y;
-            }else{
-                x->parent->right = y;
-            }
-        }
-            y->left = x;
-            x->parent = y;
+    y->parent = x->parent;
+    if(x->parent==nil){
+        root = y;
     }
+    else if(x==x->parent->left){
+        x->parent->left = y;
+    }else{
+        x->parent->right = y;
+    }
+
+    y->left = x;
+    x->parent = y;
+    
 }
 
 void RB::RightRotate(Node *x){
-    if(x->left==nullptr){
-        return;
+    Node * y = x->left;
+    x->left = y->right;
+    if(y->right!=nil){
+        y->right->parent=x;
     }
+    y->parent = x->parent;
+    if(x->parent==nil){
+        root = y;
+    }
+    else if(x==x->parent->right){
+            x->parent->right=y;
+        }
     else{
-        Node * y = x->left;
-        if(y->right!=nullptr){
-            x->left = y->right;
-            y->right->parent=x;
-        }
-        else{
-            x->left=nullptr;
-        }
-        if(x->parent!=nullptr){
-            y->parent = x->parent;
-        }
-        if(x->parent==nullptr){
-            root = y;
-        }
-        else{
-            if(x==x->parent->left){
-                x->parent->left=y;
-            }
-            else{
-                x->parent->right = y;
-            }
-        }
-        y->right = x;
-        x->parent = y;
+        x->parent->left = y;
     }
+
+    y->right = x;
+    x->parent = y;
+    
 }
 
 /*
@@ -459,19 +426,19 @@ bool IsTreeEmpty(Node * root){
        return false;
 }
 */
-void RB::RBTraverse(Node*root){
-    if(root==NULL)
+void RB::RBTraverse(Node*root1){
+    if(root1==nil)
         return;
     else{
-        RBTraverse(root->left);
+        RBTraverse(root1->left);
         string nodecolor;
-        if(root->color==0){
+        if(root1->color==0){
             nodecolor="Black";
         }else{
             nodecolor="Red";
         }
-        outfile<< root->nodeProcess->ProcessID<<":"<<root->nodeProcess->TaskVrunTime<<"-"<<nodecolor<<";";
-        RBTraverse(root->right);
+        outfile<< root1->nodeProcess->ProcessID<<":"<<root1->nodeProcess->TaskVrunTime<<"-"<<nodecolor<<";";
+        RBTraverse(root1->right);
     }
 }
 
@@ -494,7 +461,7 @@ int main(int argc, char*argv[]){
             //cout<<"Simulatorruntime:"<<SimulatorRunTime<<endl;
             string data[3];
             Process *processes[NumProcesses];
-            int vectorindex=0;
+            //int vectorindex=0;
         for(int i=0;i<NumProcesses;i++){
             
             getline(inputfile, lines); // ProcessID,TimeOfArrival, BurstTime
@@ -536,7 +503,8 @@ int main(int argc, char*argv[]){
             }
             //if no task is running->choose the one with smalllest vruntime. 
             //remove that from the tree-> increment it's vruntime. check if it should stop running or not
-            if(tree_processes.root!=NULL){
+            if(tree_processes.root!=tree_processes.nil){
+                min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
                 if(RunningTask==NULL){
                     Node * smallest=tree_processes.FindMin(tree_processes.root); //FindMin doru mu idk??
                     tree_processes.Deletion(smallest); //Deletion opeariton kontrol et!
@@ -545,15 +513,16 @@ int main(int argc, char*argv[]){
                     if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
                         //task is completed
                         smallest->nodeProcess->Completed=true;
-                        completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
-                        vectorindex++;
+                        completedvector.push_back(smallest->nodeProcess->ProcessID);
+                        //completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
+                        //vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
                         tree_processes.Insertion(smallest->nodeProcess);
                     }
 
-                    min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
+                    //min_vruntime = tree_processes.FindMin(tree_processes.root)->nodeProcess->TaskVrunTime;
                     
                 }else if(RunningTask->nodeProcess->TaskVrunTime > min_vruntime){
                     //select new smallest node
@@ -564,8 +533,9 @@ int main(int argc, char*argv[]){
                     if(smallest->nodeProcess->TaskVrunTime==smallest->nodeProcess->BurstTime){
                         //task is completed
                         smallest->nodeProcess->Completed=true;
-                        completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
-                        vectorindex++;
+                        completedvector.push_back(smallest->nodeProcess->ProcessID);
+                        //completedvector[vectorindex]=smallest->nodeProcess->ProcessID;
+                        //vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
@@ -577,8 +547,9 @@ int main(int argc, char*argv[]){
                     if(RunningTask->nodeProcess->TaskVrunTime==RunningTask->nodeProcess->BurstTime){
                         //task is completed
                         RunningTask->nodeProcess->Completed=true;
-                        completedvector[vectorindex]=RunningTask->nodeProcess->ProcessID;
-                        vectorindex++;
+                        completedvector.push_back(RunningTask->nodeProcess->ProcessID);
+                        //completedvector[vectorindex]=RunningTask->nodeProcess->ProcessID;
+                        //vectorindex++;
                         RunningTask=NULL;
                     }
                     else{
@@ -589,20 +560,20 @@ int main(int argc, char*argv[]){
             
                 //in insertion if it has the same vruntime, add the one that is added later as a right vchild of the current
                 //bool IsAllCompleted =  tree_processes.IsTreeEmpty(tree_processes->root);
-                if(tree_processes.root==NULL)
+                if(tree_processes.root==tree_processes.nil)
                     IsAllCompleted=true;
                 else    
                     IsAllCompleted=false;
                 
                 //CurrTime, RunningTask, TaskVruntime, MinVruntime, RBTTraversal, TaskStatus
-                outfile<<runtime<<","<<RunningTask<<","<<RunningTask->nodeProcess->TaskVrunTime<<",";
+                outfile<<runtime<<","<<RunningTask->nodeProcess->ProcessID<<","<<RunningTask->nodeProcess->TaskVrunTime<<",";
                 outfile<<min_vruntime;
                 tree_processes.RBTraverse(tree_processes.root);
                 string completestring;
                 if(RunningTask->nodeProcess->Completed==true){
-                    completestring="Complete";
+                    completestring=",Complete";
                 }else{
-                    completestring="Incomplete";
+                    completestring=",Incomplete";
                 }
                 outfile<<completestring<<endl;
 
